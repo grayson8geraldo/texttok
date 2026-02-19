@@ -1,0 +1,1 @@
+# TextTok has no external dependencies — uses only Python 3.8+ standard library
