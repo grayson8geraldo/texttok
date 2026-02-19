@@ -107,6 +107,19 @@ class TextAnalyzer:
         latin = sum(1 for c in text if "A" <= c <= "Z" or "a" <= c <= "z")
         if cyrillic > latin:
             return "ru"
+        # Distinguish Dutch from English using common Dutch marker words
+        text_lower = text.lower()
+        dutch_markers = [
+            " het ", " een ", " de ", " van ", " dat ", " dit ",
+            " niet ", " ook ", " maar ", " zijn ", " voor ", " met ",
+            " hebben ", " naar ", " wordt ", " deze ", " meer ",
+            " nog ", " wel ", " veel ", " omdat ", " dus ", " zoals ",
+            " echt ", " heel ", " jij ", " wij ", " zij ",
+            "ij", "oe", "aa", "ee", "oo", "uu",
+        ]
+        dutch_score = sum(1 for m in dutch_markers if m in text_lower)
+        if dutch_score >= 4:
+            return "nl"
         return "en"
 
     def _extract_hashtags(self, text: str) -> list:
@@ -129,7 +142,12 @@ class TextAnalyzer:
     def _find_complex_phrases(self, text: str, language: str) -> list:
         found = []
         text_lower = text.lower()
-        simplify_map = rules.SIMPLIFY_MAP_RU if language == "ru" else rules.SIMPLIFY_MAP_EN
+        simplify_maps = {
+            "ru": rules.SIMPLIFY_MAP_RU,
+            "nl": rules.SIMPLIFY_MAP_NL,
+            "en": rules.SIMPLIFY_MAP_EN,
+        }
+        simplify_map = simplify_maps.get(language, rules.SIMPLIFY_MAP_EN)
         for phrase in simplify_map:
             if phrase in text_lower:
                 found.append(phrase)
@@ -137,12 +155,17 @@ class TextAnalyzer:
             for word in rules.COMPLEX_WORD_INDICATORS_RU:
                 if word in text_lower and word not in found:
                     found.append(word)
+        elif language == "nl":
+            for word in rules.COMPLEX_WORD_INDICATORS_NL:
+                if word in text_lower and word not in found:
+                    found.append(word)
         return found
 
     def _has_hook(self, first_line: str) -> bool:
         first_lower = first_line.lower()
-        # Check known patterns
-        for pattern in rules.HOOK_PATTERNS:
+        # Check known patterns (all languages)
+        all_hook_patterns = rules.HOOK_PATTERNS + rules.HOOK_PATTERNS_NL
+        for pattern in all_hook_patterns:
             if pattern.lower() in first_lower:
                 return True
         # Short punchy first line = good hook
@@ -153,7 +176,8 @@ class TextAnalyzer:
 
     def _has_cta(self, text: str) -> bool:
         text_lower = text.lower()
-        for cta in rules.CTA_PHRASES:
+        all_cta_phrases = rules.CTA_PHRASES + rules.CTA_PHRASES_NL
+        for cta in all_cta_phrases:
             if cta.lower() in text_lower:
                 return True
         # Check generic CTA patterns
@@ -161,6 +185,7 @@ class TextAnalyzer:
             r"подпис\w*", r"подпиш\w*", r"комментир\w*", r"комментар\w*",
             r"лайк\w*", r"сохран\w*",
             r"follow", r"subscribe", r"comment", r"like", r"share", r"save",
+            r"volg\w*", r"reageer\w*", r"reactie\w*", r"deel\w*", r"opslaan",
         ]
         for pattern in cta_patterns:
             if re.search(pattern, text_lower):

@@ -113,6 +113,73 @@ SIMPLIFY_MAP_RU = {
     "следует подчеркнуть": "важно",
 }
 
+# Words considered complex (Dutch)
+COMPLEX_WORD_INDICATORS_NL = [
+    "desalniettemin", "dienovereenkomstig", "veronderstelling",
+    "werkzaamheden", "bovengenoemde", "hieronderstaande",
+    "bewerkstelligen", "verwezenlijken", "totstandkoming",
+    "inachtneming", "overeenstemming", "voorwaardelijk",
+    "noodzakelijkerwijs", "vanzelfsprekend", "overeenkomstig",
+]
+
+# Simple replacements for common complex phrases (Dutch)
+SIMPLIFY_MAP_NL = {
+    "op dit moment": "nu",
+    "op het huidige moment": "nu",
+    "met betrekking tot": "over",
+    "ten aanzien van": "over",
+    "in verband met": "door",
+    "als gevolg van": "door",
+    "met als doel": "om",
+    "ten behoeve van": "voor",
+    "in de gelegenheid stellen": "laten",
+    "van mening zijn": "vinden",
+    "tot stand brengen": "maken",
+    "in beschouwing nemen": "bekijken",
+    "desalniettemin": "toch",
+    "dienovereenkomstig": "dus",
+    "met het oog op": "voor",
+    "in het kader van": "bij",
+    "naar aanleiding van": "door",
+    "wat betreft": "over",
+    "het is van belang": "het is belangrijk",
+    "dient te worden": "moet",
+    "werkzaamheden verrichten": "werken",
+    "een bijdrage leveren": "bijdragen",
+    "van toepassing zijn": "gelden",
+}
+
+# Dutch slang / informal replacements for TikTok tone
+SLANG_MAP_NL = {
+    "heel erg": "echt mega",
+    "heel goed": "vet goed",
+    "heel mooi": "echt sick",
+    "heel leuk": "echt nice",
+    "heel grappig": "echt lachen",
+    "heel veel": "mega veel",
+    "heel cool": "echt chill",
+    "geweldig": "sick",
+    "fantastisch": "echt top",
+    "verschrikkelijk": "echt niet oké",
+    "interessant": "boeiend",
+    "dat is goed": "das prima",
+    "ik vind": "ik vind echt",
+    "volgens mij": "ik denk",
+    "inderdaad": "ja echt",
+    "absoluut": "sowieso",
+    "uitstekend": "top",
+    "prachtig": "echt mooi",
+    "ongelooflijk": "echt niet normaal",
+    "niet slecht": "best wel oké",
+    "begrijp je": "snap je",
+    "weet je": "weet je toch",
+    "in ieder geval": "sowieso",
+    "bijvoorbeeld": "bijv",
+    "natuurlijk": "tuurlijk",
+    "waarschijnlijk": "wss",
+    "eigenlijk": "eig",
+}
+
 # Simple replacements for common complex phrases (English)
 SIMPLIFY_MAP_EN = {
     "in order to": "to",
@@ -136,3 +203,29 @@ SIMPLIFY_MAP_EN = {
     "first and foremost": "first",
     "in my opinion": "I think",
 }
+
+# Dutch TikTok hook patterns
+HOOK_PATTERNS_NL = [
+    "POV:",
+    "Wacht even...",
+    "Niemand praat hierover...",
+    "Dit moet je weten...",
+    "De waarheid over...",
+    "Stop met scrollen!",
+    "Ongepopulaire mening:",
+    "Wist je dit?",
+    "Even serieus...",
+    "Luister...",
+]
+
+# Dutch CTA phrases
+CTA_PHRASES_NL = [
+    "Wat vind jij?",
+    "Deel je ervaring!",
+    "Sla dit op!",
+    "Volg voor meer!",
+    "Laat een reactie achter!",
+    "Tag iemand die dit moet zien!",
+    "Ben je het eens?",
+    "Like als je dit herkent!",
+]

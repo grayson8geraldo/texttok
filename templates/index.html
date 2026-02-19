@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TextTok — TikTok Text Optimizer</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f0f;
+            color: #e1e1e1;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 1px solid #2a2a2a;
+            margin-bottom: 30px;
+        }
+        header h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, #fe2c55, #25f4ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        header p {
+            color: #888;
+            margin-top: 8px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #ccc;
+        }
+        textarea {
+            width: 100%;
+            min-height: 160px;
+            padding: 14px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 10px;
+            color: #e1e1e1;
+            font-size: 15px;
+            line-height: 1.5;
+            resize: vertical;
+            font-family: inherit;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #fe2c55;
+        }
+        select {
+            width: 100%;
+            padding: 12px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 10px;
+            color: #e1e1e1;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        select:focus {
+            outline: none;
+            border-color: #fe2c55;
+        }
+        .btn {
+            display: inline-block;
+            padding: 14px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(135deg, #fe2c55, #d4234a);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: wait;
+        }
+        .results {
+            margin-top: 30px;
+            display: none;
+        }
+        .results.show { display: block; }
+        .result-card {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .result-card h3 {
+            margin-bottom: 12px;
+            font-size: 1rem;
+            color: #25f4ee;
+        }
+        .result-text {
+            white-space: pre-wrap;
+            word-break: break-word;
+            line-height: 1.6;
+            font-size: 15px;
+            padding: 14px;
+            background: #111;
+            border-radius: 8px;
+            border: 1px solid #222;
+        }
+        .copy-btn {
+            margin-top: 10px;
+            padding: 8px 16px;
+            font-size: 13px;
+            color: #25f4ee;
+            background: transparent;
+            border: 1px solid #25f4ee;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .copy-btn:hover {
+            background: #25f4ee;
+            color: #0f0f0f;
+        }
+        .score-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .score-bar .label { font-size: 14px; color: #888; min-width: 60px; }
+        .score-track {
+            flex: 1;
+            height: 10px;
+            background: #222;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .score-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.6s ease;
+        }
+        .score-fill.before { background: #fe2c55; }
+        .score-fill.after { background: #25f4ee; }
+        .score-val {
+            font-weight: 700;
+            font-size: 18px;
+            min-width: 50px;
+            text-align: right;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .stat {
+            background: #111;
+            border-radius: 8px;
+            padding: 10px 14px;
+        }
+        .stat .stat-label { font-size: 12px; color: #666; }
+        .stat .stat-value { font-size: 18px; font-weight: 600; margin-top: 2px; }
+        .issues-list, .suggestions-list {
+            margin-top: 12px;
+            padding-left: 20px;
+        }
+        .issues-list li { color: #fe2c55; margin-bottom: 4px; }
+        .suggestions-list li { color: #25f4ee; margin-bottom: 4px; }
+        .delta {
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 700;
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .delta.positive { background: rgba(37, 244, 238, 0.1); color: #25f4ee; }
+        .delta.neutral { background: rgba(255, 255, 255, 0.05); color: #888; }
+        .delta.negative { background: rgba(254, 44, 85, 0.1); color: #fe2c55; }
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>TextTok</h1>
+            <p>Optimize your text for TikTok — keep the meaning, boost the reach</p>
+        </header>
+
+        <form id="optimizeForm">
+            <div class="form-group">
+                <label for="inputText">Your text</label>
+                <textarea id="inputText" placeholder="Paste your text here..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="topic">Topic (for hashtags)</label>
+                <select id="topic">
+                    <option value="default">General / Default</option>
+                    <option value="education">Education</option>
+                    <option value="motivation">Motivation</option>
+                    <option value="life">Life</option>
+                    <option value="tech">Tech</option>
+                    <option value="business">Business</option>
+                    <option value="health">Health</option>
+                    <option value="food">Food</option>
+                    <option value="travel">Travel</option>
+                </select>
+            </div>
+            <button type="submit" class="btn" id="submitBtn">Optimize for TikTok</button>
+        </form>
+
+        <div class="results" id="results">
+            <div class="delta" id="scoreDelta"></div>
+
+            <div class="result-card">
+                <h3>Optimized Text</h3>
+                <div class="result-text" id="optimizedText"></div>
+                <button class="copy-btn" onclick="copyText()">Copy to clipboard</button>
+            </div>
+
+            <div class="result-card">
+                <h3>Before</h3>
+                <div class="score-bar">
+                    <span class="label">Score</span>
+                    <div class="score-track"><div class="score-fill before" id="scoreBefore"></div></div>
+                    <span class="score-val" id="scoreBeforeVal"></span>
+                </div>
+                <div class="stats-grid" id="statsBefore"></div>
+                <div id="issuesBefore"></div>
+            </div>
+
+            <div class="result-card">
+                <h3>After</h3>
+                <div class="score-bar">
+                    <span class="label">Score</span>
+                    <div class="score-track"><div class="score-fill after" id="scoreAfter"></div></div>
+                    <span class="score-val" id="scoreAfterVal"></span>
+                </div>
+                <div class="stats-grid" id="statsAfter"></div>
+                <div id="suggestionsAfter"></div>
+            </div>
+
+            <div class="result-card">
+                <h3>Original Text</h3>
+                <div class="result-text" id="originalText"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('optimizeForm');
+        const btn = document.getElementById('submitBtn');
+        const resultsDiv = document.getElementById('results');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = document.getElementById('inputText').value.trim();
+            if (!text) return;
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Optimizing...';
+            resultsDiv.classList.remove('show');
+
+            try {
+                const resp = await fetch('/api/optimize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: text,
+                        topic: document.getElementById('topic').value,
+                    }),
+                });
+                const data = await resp.json();
+                if (data.error) throw new Error(data.error);
+                renderResults(data);
+            } catch (err) {
+                alert('Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Optimize for TikTok';
+            }
+        });
+
+        function renderResults(data) {
+            const before = data.before_report;
+            const after = data.after_report;
+            const delta = after.score - before.score;
+            const sign = delta > 0 ? '+' : '';
+
+            // Delta banner
+            const deltaEl = document.getElementById('scoreDelta');
+            deltaEl.textContent = `Score: ${before.score} → ${after.score} (${sign}${delta})`;
+            deltaEl.className = 'delta ' + (delta > 0 ? 'positive' : delta === 0 ? 'neutral' : 'negative');
+
+            // Texts
+            document.getElementById('optimizedText').textContent = data.optimized;
+            document.getElementById('originalText').textContent = data.original;
+
+            // Score bars
+            document.getElementById('scoreBefore').style.width = before.score + '%';
+            document.getElementById('scoreBeforeVal').textContent = before.score + '/100';
+            document.getElementById('scoreAfter').style.width = after.score + '%';
+            document.getElementById('scoreAfterVal').textContent = after.score + '/100';
+
+            // Stats
+            renderStats('statsBefore', before);
+            renderStats('statsAfter', after);
+
+            // Issues & suggestions
+            renderList('issuesBefore', before.issues, 'issues-list');
+            renderList('suggestionsAfter', after.suggestions, 'suggestions-list');
+
+            resultsDiv.classList.add('show');
+            resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function renderStats(containerId, report) {
+            const el = document.getElementById(containerId);
+            el.innerHTML = [
+                stat('Length', report.total_length + ' chars'),
+                stat('Words', report.word_count),
+                stat('Sentences', report.sentence_count),
+                stat('Avg sent.', report.avg_sentence_length + ' words'),
+                stat('Hashtags', report.hashtag_count),
+                stat('Emojis', report.emoji_count),
+                stat('Hook', report.has_hook ? 'Yes' : 'No'),
+                stat('CTA', report.has_cta ? 'Yes' : 'No'),
+                stat('Language', report.language.toUpperCase()),
+            ].join('');
+        }
+
+        function stat(label, value) {
+            return `<div class="stat"><div class="stat-label">${label}</div><div class="stat-value">${value}</div></div>`;
+        }
+
+        function renderList(containerId, items, className) {
+            const el = document.getElementById(containerId);
+            if (!items || items.length === 0) {
+                el.innerHTML = '';
+                return;
+            }
+            el.innerHTML = '<ul class="' + className + '">' +
+                items.map(i => '<li>' + escapeHtml(i) + '</li>').join('') +
+                '</ul>';
+        }
+
+        function escapeHtml(text) {
+            const d = document.createElement('div');
+            d.textContent = text;
+            return d.innerHTML;
+        }
+
+        function copyText() {
+            const text = document.getElementById('optimizedText').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = 'Copy to clipboard', 2000);
+            });
+        }
+    </script>
+</body>
+</html>

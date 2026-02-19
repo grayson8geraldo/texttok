@@ -69,11 +69,21 @@ class TextTransformer:
         }
 
     def _simplify_phrases(self, text: str, language: str) -> str:
-        simplify_map = rules.SIMPLIFY_MAP_RU if language == "ru" else rules.SIMPLIFY_MAP_EN
+        simplify_maps = {
+            "ru": rules.SIMPLIFY_MAP_RU,
+            "nl": rules.SIMPLIFY_MAP_NL,
+            "en": rules.SIMPLIFY_MAP_EN,
+        }
+        simplify_map = simplify_maps.get(language, rules.SIMPLIFY_MAP_EN)
         result = text
         for complex_phrase, simple_phrase in simplify_map.items():
             pattern = re.compile(re.escape(complex_phrase), re.IGNORECASE)
             result = pattern.sub(simple_phrase, result)
+        # Apply Dutch slang on top of simplification
+        if language == "nl":
+            for formal, slang in rules.SLANG_MAP_NL.items():
+                pattern = re.compile(re.escape(formal), re.IGNORECASE)
+                result = pattern.sub(slang, result)
         return result
 
     def _break_long_sentences(self, text: str, language: str) -> str:
@@ -90,6 +100,13 @@ class TextTransformer:
                         "потому что", "поэтому", "однако", "но",
                         "а также", "при этом", "причём", "когда",
                         "где", "хотя", "если", "так как",
+                    ]
+                elif language == "nl":
+                    split_words = [
+                        "die", "dat", "omdat", "maar",
+                        "echter", "hoewel", "wanneer", "waar",
+                        "want", "dus", "daardoor", "en",
+                        "terwijl", "zodat", "waardoor", "aangezien",
                     ]
                 else:
                     split_words = [
@@ -173,6 +190,12 @@ class TextTransformer:
                 "Об этом мало кто говорит 👇",
                 "Задумайтесь об этом 👇",
             ]
+        elif language == "nl":
+            hooks = [
+                "Dit moet je echt weten 👇",
+                "Niemand praat hierover 👇",
+                "Even serieus... 👇",
+            ]
         else:
             hooks = [
                 "Here's what you need to know 👇",
@@ -193,6 +216,12 @@ class TextTransformer:
                 "А что думаете вы? 👇",
                 "Согласны? Пишите в комментарии!",
                 "Сохраняйте, чтобы не потерять! 📌",
+            ]
+        elif language == "nl":
+            ctas = [
+                "Wat vind jij? 👇",
+                "Ben je het eens? Laat een reactie achter!",
+                "Sla dit op! 📌",
             ]
         else:
             ctas = [

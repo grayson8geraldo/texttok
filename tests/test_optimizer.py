@@ -244,5 +244,101 @@ class TestEnglishIntegration(unittest.TestCase):
         self.assertGreater(result["after_report"].score, result["before_report"].score)
 
 
+class TestDutchAnalyzer(unittest.TestCase):
+    """Tests for Dutch language detection and analysis."""
+
+    def setUp(self):
+        self.analyzer = TextAnalyzer()
+
+    def test_detect_language_dutch(self):
+        text = "Dit is een heel belangrijk bericht voor iedereen die het niet weet."
+        report = self.analyzer.analyze(text)
+        self.assertEqual(report.language, "nl")
+
+    def test_complex_phrases_dutch(self):
+        text = "Met betrekking tot dit onderwerp zijn wij ook van mening dat het op dit moment niet heel goed gaat voor de mensen."
+        report = self.analyzer.analyze(text)
+        self.assertEqual(report.language, "nl")
+        self.assertIn("met betrekking tot", report.complex_phrases_found)
+        self.assertIn("op dit moment", report.complex_phrases_found)
+
+    def test_cta_detection_dutch(self):
+        report = self.analyzer.analyze("Geweldige content. Volg voor meer!")
+        self.assertTrue(report.has_cta)
+
+    def test_hook_detection_dutch(self):
+        report = self.analyzer.analyze("Wist je dit?\nDit is belangrijk.")
+        self.assertTrue(report.has_hook)
+
+
+class TestDutchTransformer(unittest.TestCase):
+    """Tests for Dutch text transformation and slang."""
+
+    def setUp(self):
+        self.transformer = TextTransformer()
+
+    def test_simplifies_dutch_formal(self):
+        text = "Op dit moment zijn wij van mening dat het met betrekking tot dit onderwerp heel belangrijk is."
+        result = self.transformer.optimize(text)
+        optimized_lower = result["optimized"].lower()
+        self.assertNotIn("op dit moment", optimized_lower)
+        self.assertNotIn("van mening zijn", optimized_lower)
+        self.assertNotIn("met betrekking tot", optimized_lower)
+
+    def test_applies_dutch_slang(self):
+        text = "Dit is heel goed en ook heel leuk voor iedereen die het niet weet."
+        result = self.transformer.optimize(text)
+        optimized_lower = result["optimized"].lower()
+        # Should convert "heel goed" -> "vet goed" or "heel leuk" -> "echt nice"
+        has_slang = "vet goed" in optimized_lower or "echt nice" in optimized_lower
+        self.assertTrue(has_slang)
+
+    def test_dutch_hashtags(self):
+        text = "Dit is een heel belangrijk bericht voor iedereen die het niet weet."
+        result = self.transformer.optimize(text)
+        self.assertIn("#", result["optimized"])
+
+    def test_dutch_score_improves(self):
+        text = (
+            "Op dit moment is het van belang dat wij met betrekking tot de huidige "
+            "situatie werkzaamheden verrichten die een bijdrage leveren aan het verbeteren "
+            "van de kwaliteit van het onderwijs in Nederland want dat is heel erg belangrijk "
+            "voor de toekomst van onze samenleving."
+        )
+        result = self.transformer.optimize(text, topic="education")
+        self.assertGreater(result["after_report"].score, result["before_report"].score)
+
+
+class TestDutchIntegration(unittest.TestCase):
+    """Full integration test with realistic Dutch text."""
+
+    def setUp(self):
+        self.transformer = TextTransformer()
+
+    def test_formal_dutch_text(self):
+        text = (
+            "Op dit moment is het van belang dat men met betrekking tot sociale media "
+            "werkzaamheden verrichten om een bijdrage leveren aan de groei van het merk, "
+            "want dat is desalniettemin heel erg belangrijk voor de toekomst."
+        )
+        result = self.transformer.optimize(text, topic="business")
+        optimized = result["optimized"]
+        optimized_lower = optimized.lower()
+
+        # Should simplify formal phrases
+        self.assertNotIn("op dit moment", optimized_lower)
+        self.assertNotIn("met betrekking tot", optimized_lower)
+        self.assertNotIn("werkzaamheden verrichten", optimized_lower)
+
+        # Should apply slang
+        self.assertNotIn("heel erg", optimized_lower)
+
+        # Should have hashtags
+        self.assertIn("#", optimized)
+
+        # Score should improve
+        self.assertGreater(result["after_report"].score, result["before_report"].score)
+
+
 if __name__ == "__main__":
     unittest.main()
