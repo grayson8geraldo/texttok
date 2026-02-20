@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""TextTok — Web interface for TikTok text optimizer.
+"""TextTok — Web interface for TikTok text optimizer & UGC generator.
 
 Usage:
     python web.py              # start on port 5000
@@ -7,16 +7,16 @@ Usage:
 """
 
 import argparse
-from dataclasses import asdict
 
 from flask import Flask, jsonify, render_template, request
 
-from optimizer import TextAnalyzer, TextTransformer
+from optimizer import TextAnalyzer, TextTransformer, UGCGenerator
 
 app = Flask(__name__)
 
 analyzer = TextAnalyzer()
 transformer = TextTransformer()
+generator = UGCGenerator()
 
 
 @app.route("/")
@@ -58,6 +58,47 @@ def api_analyze():
 
     report = analyzer.analyze(text)
     return jsonify(_report_to_dict(report))
+
+
+@app.route("/api/templates", methods=["GET"])
+def api_templates():
+    return jsonify(generator.list_templates())
+
+
+@app.route("/api/generate", methods=["POST"])
+def api_generate():
+    data = request.get_json()
+    if not data or "template" not in data:
+        return jsonify({"error": "No template specified"}), 400
+
+    template_id = data["template"]
+    count = min(data.get("count", 1), 20)  # cap at 20
+    style = data.get("style", "full")
+    add_hashtags = data.get("add_hashtags", True)
+    add_emojis = data.get("add_emojis", True)
+
+    try:
+        results = generator.generate(
+            template_id=template_id,
+            count=count,
+            style=style,
+            add_hashtags=add_hashtags,
+            add_emojis=add_emojis,
+        )
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+    return jsonify({
+        "results": [
+            {
+                "text": r["text"],
+                "style": r["style"],
+                "template": r["template"],
+                "warnings": r["warnings"],
+            }
+            for r in results
+        ]
+    })
 
 
 def _report_to_dict(report) -> dict:

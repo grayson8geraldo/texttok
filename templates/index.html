@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TextTok — TikTok Text Optimizer</title>
+    <title>TextTok — TikTok Text Optimizer & UGC Generator</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -19,9 +19,7 @@
         }
         header {
             text-align: center;
-            padding: 30px 0;
-            border-bottom: 1px solid #2a2a2a;
-            margin-bottom: 30px;
+            padding: 30px 0 20px;
         }
         header h1 {
             font-size: 2rem;
@@ -30,13 +28,36 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        header p {
+        header p { color: #888; margin-top: 8px; }
+
+        /* ── Tabs ── */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #2a2a2a;
+            margin-bottom: 30px;
+        }
+        .tab {
+            flex: 1;
+            padding: 14px;
+            text-align: center;
+            cursor: pointer;
             color: #888;
-            margin-top: 8px;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
         }
-        .form-group {
-            margin-bottom: 20px;
+        .tab:hover { color: #ccc; }
+        .tab.active {
+            color: #25f4ee;
+            border-bottom-color: #25f4ee;
         }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* ── Forms ── */
+        .form-group { margin-bottom: 20px; }
+        .form-row { display: flex; gap: 16px; }
+        .form-row .form-group { flex: 1; }
         label {
             display: block;
             font-weight: 600;
@@ -56,11 +77,8 @@
             resize: vertical;
             font-family: inherit;
         }
-        textarea:focus {
-            outline: none;
-            border-color: #fe2c55;
-        }
-        select {
+        textarea:focus { outline: none; border-color: #fe2c55; }
+        select, input[type="number"] {
             width: 100%;
             padding: 12px;
             background: #1a1a1a;
@@ -70,10 +88,7 @@
             font-size: 15px;
             cursor: pointer;
         }
-        select:focus {
-            outline: none;
-            border-color: #fe2c55;
-        }
+        select:focus, input[type="number"]:focus { outline: none; border-color: #fe2c55; }
         .btn {
             display: inline-block;
             padding: 14px 32px;
@@ -88,14 +103,14 @@
             transition: opacity 0.2s;
         }
         .btn:hover { opacity: 0.9; }
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: wait;
+        .btn:disabled { opacity: 0.5; cursor: wait; }
+        .btn-generate {
+            background: linear-gradient(135deg, #25f4ee, #1ac9c4);
+            color: #0f0f0f;
         }
-        .results {
-            margin-top: 30px;
-            display: none;
-        }
+
+        /* ── Results ── */
+        .results { margin-top: 30px; display: none; }
         .results.show { display: block; }
         .result-card {
             background: #1a1a1a;
@@ -130,78 +145,87 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-        .copy-btn:hover {
-            background: #25f4ee;
-            color: #0f0f0f;
-        }
-        .score-bar {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin-top: 16px;
-        }
+        .copy-btn:hover { background: #25f4ee; color: #0f0f0f; }
+
+        /* ── Score bars ── */
+        .score-bar { display: flex; align-items: center; gap: 16px; margin-top: 16px; }
         .score-bar .label { font-size: 14px; color: #888; min-width: 60px; }
-        .score-track {
-            flex: 1;
-            height: 10px;
-            background: #222;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-        .score-fill {
-            height: 100%;
-            border-radius: 5px;
-            transition: width 0.6s ease;
-        }
+        .score-track { flex: 1; height: 10px; background: #222; border-radius: 5px; overflow: hidden; }
+        .score-fill { height: 100%; border-radius: 5px; transition: width 0.6s ease; }
         .score-fill.before { background: #fe2c55; }
         .score-fill.after { background: #25f4ee; }
-        .score-val {
-            font-weight: 700;
-            font-size: 18px;
-            min-width: 50px;
-            text-align: right;
-        }
+        .score-val { font-weight: 700; font-size: 18px; min-width: 50px; text-align: right; }
+
+        /* ── Stats ── */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
             gap: 10px;
             margin-top: 16px;
         }
-        .stat {
-            background: #111;
-            border-radius: 8px;
-            padding: 10px 14px;
-        }
+        .stat { background: #111; border-radius: 8px; padding: 10px 14px; }
         .stat .stat-label { font-size: 12px; color: #666; }
         .stat .stat-value { font-size: 18px; font-weight: 600; margin-top: 2px; }
-        .issues-list, .suggestions-list {
-            margin-top: 12px;
-            padding-left: 20px;
-        }
+        .issues-list, .suggestions-list { margin-top: 12px; padding-left: 20px; }
         .issues-list li { color: #fe2c55; margin-bottom: 4px; }
         .suggestions-list li { color: #25f4ee; margin-bottom: 4px; }
         .delta {
-            text-align: center;
-            font-size: 1.3rem;
-            font-weight: 700;
-            padding: 16px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+            text-align: center; font-size: 1.3rem; font-weight: 700;
+            padding: 16px; border-radius: 10px; margin-bottom: 20px;
         }
         .delta.positive { background: rgba(37, 244, 238, 0.1); color: #25f4ee; }
         .delta.neutral { background: rgba(255, 255, 255, 0.05); color: #888; }
         .delta.negative { background: rgba(254, 44, 85, 0.1); color: #fe2c55; }
-        .spinner {
-            display: inline-block;
-            width: 18px;
-            height: 18px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-top-color: #fff;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-            vertical-align: middle;
-            margin-right: 8px;
+
+        /* ── Generated cards ── */
+        .gen-card {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
         }
+        .gen-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .gen-card-header .num {
+            font-weight: 700;
+            color: #25f4ee;
+        }
+        .gen-card-header .badge {
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            background: #222;
+            color: #888;
+        }
+        .warning-tag {
+            display: inline-block;
+            font-size: 12px;
+            background: rgba(254, 44, 85, 0.15);
+            color: #fe2c55;
+            padding: 4px 10px;
+            border-radius: 6px;
+            margin-top: 8px;
+        }
+        .gen-counter {
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        /* ── Spinner ── */
+        .spinner {
+            display: inline-block; width: 18px; height: 18px;
+            border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+            border-radius: 50%; animation: spin 0.6s linear infinite;
+            vertical-align: middle; margin-right: 8px;
+        }
+        .spinner-dark { border-color: rgba(0,0,0,0.2); border-top-color: #0f0f0f; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
@@ -209,95 +233,141 @@
     <div class="container">
         <header>
             <h1>TextTok</h1>
-            <p>Optimize your text for TikTok — keep the meaning, boost the reach</p>
+            <p>Optimize text for TikTok & generate UGC marketing content</p>
         </header>
 
-        <form id="optimizeForm">
-            <div class="form-group">
-                <label for="inputText">Your text</label>
-                <textarea id="inputText" placeholder="Paste your text here..." required></textarea>
-            </div>
-            <div class="form-group">
-                <label for="topic">Topic (for hashtags)</label>
-                <select id="topic">
-                    <option value="default">General / Default</option>
-                    <option value="education">Education</option>
-                    <option value="motivation">Motivation</option>
-                    <option value="life">Life</option>
-                    <option value="tech">Tech</option>
-                    <option value="business">Business</option>
-                    <option value="health">Health</option>
-                    <option value="food">Food</option>
-                    <option value="travel">Travel</option>
-                </select>
-            </div>
-            <button type="submit" class="btn" id="submitBtn">Optimize for TikTok</button>
-        </form>
+        <!-- Tabs -->
+        <div class="tabs">
+            <div class="tab active" data-tab="optimize">Optimize Text</div>
+            <div class="tab" data-tab="generate">Generate UGC</div>
+        </div>
 
-        <div class="results" id="results">
-            <div class="delta" id="scoreDelta"></div>
-
-            <div class="result-card">
-                <h3>Optimized Text</h3>
-                <div class="result-text" id="optimizedText"></div>
-                <button class="copy-btn" onclick="copyText()">Copy to clipboard</button>
-            </div>
-
-            <div class="result-card">
-                <h3>Before</h3>
-                <div class="score-bar">
-                    <span class="label">Score</span>
-                    <div class="score-track"><div class="score-fill before" id="scoreBefore"></div></div>
-                    <span class="score-val" id="scoreBeforeVal"></span>
+        <!-- ═══ Optimize Tab ═══ -->
+        <div class="tab-content active" id="tab-optimize">
+            <form id="optimizeForm">
+                <div class="form-group">
+                    <label for="inputText">Your text</label>
+                    <textarea id="inputText" placeholder="Paste your text here..." required></textarea>
                 </div>
-                <div class="stats-grid" id="statsBefore"></div>
-                <div id="issuesBefore"></div>
-            </div>
-
-            <div class="result-card">
-                <h3>After</h3>
-                <div class="score-bar">
-                    <span class="label">Score</span>
-                    <div class="score-track"><div class="score-fill after" id="scoreAfter"></div></div>
-                    <span class="score-val" id="scoreAfterVal"></span>
+                <div class="form-group">
+                    <label for="topic">Topic (for hashtags)</label>
+                    <select id="topic">
+                        <option value="default">General / Default</option>
+                        <option value="education">Education</option>
+                        <option value="motivation">Motivation</option>
+                        <option value="life">Life</option>
+                        <option value="tech">Tech</option>
+                        <option value="business">Business</option>
+                        <option value="health">Health</option>
+                        <option value="food">Food</option>
+                        <option value="travel">Travel</option>
+                    </select>
                 </div>
-                <div class="stats-grid" id="statsAfter"></div>
-                <div id="suggestionsAfter"></div>
-            </div>
+                <button type="submit" class="btn" id="optimizeBtn">Optimize for TikTok</button>
+            </form>
 
-            <div class="result-card">
-                <h3>Original Text</h3>
-                <div class="result-text" id="originalText"></div>
+            <div class="results" id="optimizeResults">
+                <div class="delta" id="scoreDelta"></div>
+                <div class="result-card">
+                    <h3>Optimized Text</h3>
+                    <div class="result-text" id="optimizedText"></div>
+                    <button class="copy-btn" onclick="copyEl('optimizedText')">Copy to clipboard</button>
+                </div>
+                <div class="result-card">
+                    <h3>Before</h3>
+                    <div class="score-bar">
+                        <span class="label">Score</span>
+                        <div class="score-track"><div class="score-fill before" id="scoreBefore"></div></div>
+                        <span class="score-val" id="scoreBeforeVal"></span>
+                    </div>
+                    <div class="stats-grid" id="statsBefore"></div>
+                    <div id="issuesBefore"></div>
+                </div>
+                <div class="result-card">
+                    <h3>After</h3>
+                    <div class="score-bar">
+                        <span class="label">Score</span>
+                        <div class="score-track"><div class="score-fill after" id="scoreAfter"></div></div>
+                        <span class="score-val" id="scoreAfterVal"></span>
+                    </div>
+                    <div class="stats-grid" id="statsAfter"></div>
+                    <div id="suggestionsAfter"></div>
+                </div>
+                <div class="result-card">
+                    <h3>Original Text</h3>
+                    <div class="result-text" id="originalText"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ Generate Tab ═══ -->
+        <div class="tab-content" id="tab-generate">
+            <form id="generateForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="genTemplate">Template</label>
+                        <select id="genTemplate">
+                            <option value="snell">Snell (Clicker Game)</option>
+                            <option value="tube">Tube (Video Bot)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="genStyle">Style</label>
+                        <select id="genStyle">
+                            <option value="full">Full (all sections)</option>
+                            <option value="short">Short (hook + action + CTA)</option>
+                            <option value="caption">Caption (single paragraph)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="genCount">Count</label>
+                        <input type="number" id="genCount" min="1" max="20" value="3">
+                    </div>
+                    <div class="form-group" style="display:flex;align-items:end;">
+                        <button type="submit" class="btn btn-generate" id="generateBtn">Generate UGC Texts</button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="results" id="generateResults">
+                <div class="gen-counter" id="genCounter"></div>
+                <div id="genCards"></div>
             </div>
         </div>
     </div>
 
     <script>
-        const form = document.getElementById('optimizeForm');
-        const btn = document.getElementById('submitBtn');
-        const resultsDiv = document.getElementById('results');
+        // ── Tab switching ──
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+            });
+        });
 
-        form.addEventListener('submit', async (e) => {
+        // ── Optimize ──
+        document.getElementById('optimizeForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const text = document.getElementById('inputText').value.trim();
             if (!text) return;
-
+            const btn = document.getElementById('optimizeBtn');
+            const res = document.getElementById('optimizeResults');
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner"></span>Optimizing...';
-            resultsDiv.classList.remove('show');
-
+            res.classList.remove('show');
             try {
                 const resp = await fetch('/api/optimize', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        text: text,
-                        topic: document.getElementById('topic').value,
-                    }),
+                    body: JSON.stringify({ text, topic: document.getElementById('topic').value }),
                 });
                 const data = await resp.json();
                 if (data.error) throw new Error(data.error);
-                renderResults(data);
+                renderOptimizeResults(data);
             } catch (err) {
                 alert('Error: ' + err.message);
             } finally {
@@ -306,81 +376,115 @@
             }
         });
 
-        function renderResults(data) {
-            const before = data.before_report;
-            const after = data.after_report;
+        function renderOptimizeResults(data) {
+            const before = data.before_report, after = data.after_report;
             const delta = after.score - before.score;
             const sign = delta > 0 ? '+' : '';
-
-            // Delta banner
             const deltaEl = document.getElementById('scoreDelta');
             deltaEl.textContent = `Score: ${before.score} → ${after.score} (${sign}${delta})`;
             deltaEl.className = 'delta ' + (delta > 0 ? 'positive' : delta === 0 ? 'neutral' : 'negative');
-
-            // Texts
             document.getElementById('optimizedText').textContent = data.optimized;
             document.getElementById('originalText').textContent = data.original;
-
-            // Score bars
             document.getElementById('scoreBefore').style.width = before.score + '%';
             document.getElementById('scoreBeforeVal').textContent = before.score + '/100';
             document.getElementById('scoreAfter').style.width = after.score + '%';
             document.getElementById('scoreAfterVal').textContent = after.score + '/100';
-
-            // Stats
             renderStats('statsBefore', before);
             renderStats('statsAfter', after);
-
-            // Issues & suggestions
             renderList('issuesBefore', before.issues, 'issues-list');
             renderList('suggestionsAfter', after.suggestions, 'suggestions-list');
-
-            resultsDiv.classList.add('show');
-            resultsDiv.scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('optimizeResults').classList.add('show');
+            document.getElementById('optimizeResults').scrollIntoView({ behavior: 'smooth' });
         }
 
-        function renderStats(containerId, report) {
-            const el = document.getElementById(containerId);
-            el.innerHTML = [
-                stat('Length', report.total_length + ' chars'),
+        // ── Generate ──
+        document.getElementById('generateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('generateBtn');
+            const res = document.getElementById('generateResults');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner spinner-dark"></span>Generating...';
+            res.classList.remove('show');
+            try {
+                const resp = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        template: document.getElementById('genTemplate').value,
+                        style: document.getElementById('genStyle').value,
+                        count: parseInt(document.getElementById('genCount').value) || 3,
+                    }),
+                });
+                const data = await resp.json();
+                if (data.error) throw new Error(data.error);
+                renderGenerateResults(data);
+            } catch (err) {
+                alert('Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Generate UGC Texts';
+            }
+        });
+
+        function renderGenerateResults(data) {
+            const items = data.results;
+            document.getElementById('genCounter').textContent = `Generated ${items.length} text(s)`;
+            const container = document.getElementById('genCards');
+            container.innerHTML = '';
+            items.forEach((item, idx) => {
+                const card = document.createElement('div');
+                card.className = 'gen-card';
+                const textId = 'genText_' + idx;
+                let html = `
+                    <div class="gen-card-header">
+                        <span class="num">#${idx + 1}</span>
+                        <span class="badge">${esc(item.style)} · ${esc(item.template)}</span>
+                    </div>
+                    <div class="result-text" id="${textId}">${esc(item.text)}</div>
+                    <button class="copy-btn" onclick="copyEl('${textId}')">Copy</button>
+                `;
+                if (item.warnings && item.warnings.length > 0) {
+                    item.warnings.forEach(w => {
+                        html += `<span class="warning-tag">${esc(w)}</span> `;
+                    });
+                }
+                card.innerHTML = html;
+                container.appendChild(card);
+            });
+            document.getElementById('generateResults').classList.add('show');
+            document.getElementById('generateResults').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // ── Helpers ──
+        function renderStats(id, report) {
+            document.getElementById(id).innerHTML = [
+                stat('Length', report.total_length + ' ch'),
                 stat('Words', report.word_count),
                 stat('Sentences', report.sentence_count),
-                stat('Avg sent.', report.avg_sentence_length + ' words'),
+                stat('Avg sent.', report.avg_sentence_length + ' w'),
                 stat('Hashtags', report.hashtag_count),
                 stat('Emojis', report.emoji_count),
                 stat('Hook', report.has_hook ? 'Yes' : 'No'),
                 stat('CTA', report.has_cta ? 'Yes' : 'No'),
-                stat('Language', report.language.toUpperCase()),
+                stat('Lang', report.language.toUpperCase()),
             ].join('');
         }
-
-        function stat(label, value) {
-            return `<div class="stat"><div class="stat-label">${label}</div><div class="stat-value">${value}</div></div>`;
+        function stat(l, v) {
+            return `<div class="stat"><div class="stat-label">${l}</div><div class="stat-value">${v}</div></div>`;
         }
-
-        function renderList(containerId, items, className) {
-            const el = document.getElementById(containerId);
-            if (!items || items.length === 0) {
-                el.innerHTML = '';
-                return;
-            }
-            el.innerHTML = '<ul class="' + className + '">' +
-                items.map(i => '<li>' + escapeHtml(i) + '</li>').join('') +
-                '</ul>';
+        function renderList(id, items, cls) {
+            const el = document.getElementById(id);
+            if (!items || !items.length) { el.innerHTML = ''; return; }
+            el.innerHTML = '<ul class="' + cls + '">' + items.map(i => '<li>' + esc(i) + '</li>').join('') + '</ul>';
         }
-
-        function escapeHtml(text) {
-            const d = document.createElement('div');
-            d.textContent = text;
-            return d.innerHTML;
+        function esc(t) {
+            const d = document.createElement('div'); d.textContent = t; return d.innerHTML;
         }
-
-        function copyText() {
-            const text = document.getElementById('optimizedText').textContent;
+        function copyEl(id) {
+            const text = document.getElementById(id).textContent;
             navigator.clipboard.writeText(text).then(() => {
-                const btn = document.querySelector('.copy-btn');
-                btn.textContent = 'Copied!';
-                setTimeout(() => btn.textContent = 'Copy to clipboard', 2000);
+                const btn = document.getElementById(id).nextElementSibling;
+                if (btn) { btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy', 2000); }
             });
         }
     </script>
