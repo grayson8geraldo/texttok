@@ -1,14 +1,17 @@
-"""Template definitions for UGC marketing text generation.
+"""Template definitions for UGC voiceover text generation.
 
 Two product templates:
 - Snell: Telegram clicker game
 - Tube: Telegram bot for watching/rating short videos
 
-Each template defines:
-- Structural sections (hook, actions, reward, safety, CTA)
-- Pools of Dutch text variations per section
-- Banned words/phrases for moderation compliance
-- Timing guidelines (for video scripts)
+Each template has section pools:
+  hooks    — first 3 sec, grab attention
+  actions  — 3-8 sec, explain how it works
+  rewards  — 8-12 sec, what user gets (in-game, modest)
+  safety   — 12-15 sec, prove it's free/safe
+  ctas     — 15-20 sec, call to action
+
+All text is Dutch, moderation-safe, no financial promises.
 """
 
 # ─────────────────────────────────────────────
@@ -42,6 +45,23 @@ BANNED_PATTERNS = [
 ]
 
 # ─────────────────────────────────────────────
+# HASHTAGS per template type
+# ─────────────────────────────────────────────
+
+HASHTAGS = {
+    "clicker": [
+        "#TelegramGame", "#ClickerGame", "#MobileGame", "#Gaming",
+        "#TelegramBot", "#GratisGame", "#NieuweGame", "#Gamen",
+        "#TikTokNL", "#Nederland", "#Verslaafd", "#Tappen",
+    ],
+    "video_tasks": [
+        "#Bijbaan", "#MicroTaken", "#Telefoon", "#TelegramBot",
+        "#VideoReview", "#GratisApp", "#Bijbaantje", "#NL",
+        "#TikTokNL", "#Nederland", "#SimpelWerk", "#Thuiswerk",
+    ],
+}
+
+# ─────────────────────────────────────────────
 # TEMPLATE: SNELL (Telegram Clicker Game)
 # ─────────────────────────────────────────────
 
@@ -49,18 +69,17 @@ SNELL = {
     "id": "snell",
     "name": "Snell",
     "type": "clicker",
-    "description": "Telegram clicker game",
+    "description": "Telegram clicker game — voiceover tekst",
 
-    # Section 1: Hook (0-3 sec)
     "hooks": [
         "Op zoek naar een nieuwe verslavende game in Telegram?",
         "Ken je die nieuwe klikker-game waar iedereen het over heeft?",
-        "Verveel je je? Deze Telegram-game is echt next level 👀",
+        "Verveel je je? Deze Telegram-game is echt next level",
         "Iedereen speelt dit in Telegram en ik snap waarom",
         "Wist je dat er een mega verslavend spel in Telegram zit?",
         "Deze game in Telegram is echt niet normaal verslavend",
         "Ik laat je zien hoe deze nieuwe Telegram-game werkt",
-        "Stop met scrollen, dit moet je zien! Nieuwe Telegram-game",
+        "Stop met scrollen! Dit moet je zien — nieuwe Telegram-game",
         "Dit is de game waar al mijn vrienden aan verslaafd zijn",
         "Zoek je iets leuks voor tussendoor? Check deze Telegram-game",
         "Heb je al gehoord van die nieuwe klikker in Telegram?",
@@ -70,7 +89,6 @@ SNELL = {
         "Nieuwe game alert! En je hebt alleen Telegram nodig",
     ],
 
-    # Section 2: Actions / Gameplay (3-8 sec)
     "actions": [
         "Je start de bot in Telegram, klikt op het scherm, verzamelt energie en upgradet je personage. Simpel!",
         "Het werkt zo: open de bot, tik op het scherm om munten te verzamelen en level je karakter omhoog",
@@ -82,7 +100,6 @@ SNELL = {
         "Je start de bot, klikt om punten te verzamelen en unlockt nieuwe levels en upgrades",
     ],
 
-    # Section 3: Rewards (8-12 sec) — CAREFUL language!
     "rewards": [
         "Voor elke klik en missie krijg je in-game munten. Spaar ze om je account te upgraden en mee te doen aan toekomstige beloningen van het project",
         "Je verzamelt in-game punten door te klikken en taken te voltooien zoals kanalen volgen. Hoe meer punten, hoe beter je positie",
@@ -93,7 +110,6 @@ SNELL = {
         "Je krijgt in-game beloningen voor klikken en dagelijkse taken. Spaar en bouw je account op",
     ],
 
-    # Section 4: Safety / No risks (12-15 sec)
     "safety": [
         "Het spel is helemaal gratis. Geen aankopen of betalingen nodig om te beginnen. Gewoon spelen in je vrije tijd",
         "Volledig gratis te spelen. Geen startkosten, geen verborgen kosten. Je hebt alleen Telegram nodig",
@@ -103,7 +119,6 @@ SNELL = {
         "Helemaal gratis. Geen creditcard, geen betaling. Open Telegram en begin te spelen",
     ],
 
-    # Section 5: CTA (15-20 sec)
     "ctas": [
         "Klik op 'Meer info' om de bot in Telegram te openen en nu te beginnen!",
         "Tik op de link om de game in Telegram te starten. Laten we gaan!",
@@ -123,9 +138,8 @@ TUBE = {
     "id": "tube",
     "name": "Tube",
     "type": "video_tasks",
-    "description": "Telegram bot for watching and rating short videos",
+    "description": "Telegram video-bot — voiceover tekst",
 
-    # Section 1: Hook (0-3 sec)
     "hooks": [
         "Op zoek naar een bijbaantje op je telefoon zonder kosten?",
         "Wij zoeken mensen om korte video's te beoordelen",
@@ -144,7 +158,6 @@ TUBE = {
         "Simpele micro-taken op je telefoon? Ja, dat bestaat",
     ],
 
-    # Section 2: Actions (3-8 sec)
     "actions": [
         "Het is simpel: je start de Telegram-bot, hij stuurt je korte video's. Jij bekijkt ze en geeft een korte beoordeling",
         "Open de bot in Telegram, bekijk de video's die hij stuurt en druk op de knop als je klaar bent. Dat is alles",
@@ -155,7 +168,6 @@ TUBE = {
         "Open Telegram, start de bot en begin met het bekijken en beoordelen van korte video's",
     ],
 
-    # Section 3: Rewards (8-12 sec) — CAREFUL language!
     "rewards": [
         "Voor elke bekeken video krijg je een kleine beloning op je balans. Het vervangt geen baan, maar het is leuk als extra in je vrije tijd",
         "De bot geeft je een kleine vergoeding per bekeken video. Zie het als een micro-bijbaantje voor tussendoor",
@@ -166,7 +178,6 @@ TUBE = {
         "Je krijgt een klein bedrag per video. Het is bescheiden, maar het telt op als je het regelmatig doet",
     ],
 
-    # Section 4: Safety (12-15 sec)
     "safety": [
         "Je hebt alleen een telefoon en Telegram nodig. Geen startkosten of verplichte betalingen. Het is volledig gratis",
         "Geen kosten nodig. Geen cursuskosten. Gewoon je telefoon en Telegram. Helemaal gratis",
@@ -176,7 +187,6 @@ TUBE = {
         "Gratis te gebruiken. Geen creditcard nodig, geen startkosten. Gewoon Telegram openen en beginnen",
     ],
 
-    # Section 5: CTA (15-20 sec)
     "ctas": [
         "Klik op 'Meer info', lees de voorwaarden op onze site en doe mee!",
         "Tik op de link, bekijk de details en start met je eerste video!",

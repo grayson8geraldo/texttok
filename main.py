@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""TextTok — TikTok text optimizer and UGC generator CLI.
+"""TextTok — TikTok text optimizer and UGC voiceover generator CLI.
 
 Usage:
     python main.py                                          # interactive optimizer
     python main.py optimize --text "your text" --topic life # optimize text
     python main.py optimize --file input.txt                # optimize from file
     python main.py optimize --text "text" --analyze-only    # analyze only
-    python main.py generate snell --count 5                 # generate 5 Snell UGC texts
+    python main.py generate snell --count 5                 # generate 5 Snell voiceover texts
     python main.py generate tube --count 3 --style short    # generate 3 short Tube texts
     python main.py generate --list                          # list available templates
 """
@@ -168,7 +168,7 @@ def run_generate(args):
         sys.exit(1)
 
     print_header()
-    print(f"Generating {args.count} text(s) for template '{args.template}' "
+    print(f"Generating {args.count} voiceover text(s) for '{args.template}' "
           f"(style: {args.style})...\n")
 
     results = generator.generate(
@@ -182,7 +182,7 @@ def run_generate(args):
     output_lines = []
 
     for i, item in enumerate(results, 1):
-        header = f"── Text #{i} ({item['style']}) "
+        header = f"── Voiceover #{i} ({item['style']}) "
         print(header + "─" * (60 - len(header)))
         print()
         print(item["text"])
@@ -195,14 +195,13 @@ def run_generate(args):
             print()
 
         output_lines.append(item["text"])
-        output_lines.append("")
 
     print(f"{'─' * 60}")
-    print(f"  Generated {len(results)} text(s) for '{args.template}'")
+    print(f"  Generated {len(results)} voiceover text(s) for '{args.template}'")
 
     if args.output:
         with open(args.output, "w", encoding="utf-8") as f:
-            f.write("\n---\n\n".join(output_lines))
+            f.write("\n\n---\n\n".join(output_lines))
         print(f"  Written to {args.output}")
 
     print()
@@ -212,7 +211,7 @@ def run_generate(args):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="TextTok — TikTok text optimizer & UGC generator"
+        description="TextTok — TikTok text optimizer & UGC voiceover generator"
     )
     subparsers = parser.add_subparsers(dest="command")
 
@@ -227,13 +226,13 @@ def main():
     opt_parser.add_argument("--output", "-o", help="Write optimized text to file")
 
     # generate subcommand
-    gen_parser = subparsers.add_parser("generate", help="Generate UGC marketing text")
+    gen_parser = subparsers.add_parser("generate", help="Generate voiceover text for TikTok videos")
     gen_parser.add_argument("template", nargs="?", help="Template name: snell, tube")
     gen_parser.add_argument("--count", "-n", type=int, default=1,
                             help="Number of texts to generate (default: 1)")
     gen_parser.add_argument("--style", "-s", choices=["full", "short", "caption"],
                             default="full",
-                            help="Text style: full (all sections), short (hook+action+CTA), caption (single paragraph)")
+                            help="Style: full (all sections), short (hook+action+CTA), caption (single paragraph)")
     gen_parser.add_argument("--no-hashtags", action="store_true",
                             help="Don't add hashtags")
     gen_parser.add_argument("--no-emojis", action="store_true",

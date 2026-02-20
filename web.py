@@ -92,6 +92,7 @@ def api_generate():
         "results": [
             {
                 "text": r["text"],
+                "sections": r["sections"],
                 "style": r["style"],
                 "template": r["template"],
                 "warnings": r["warnings"],

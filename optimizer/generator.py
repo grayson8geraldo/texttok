@@ -1,31 +1,34 @@
-"""UGC marketing text generator based on product templates.
+"""UGC voiceover text generator based on product templates.
 
-Generates varied Dutch TikTok-ready marketing texts that:
-- Follow the template structure (hook → actions → rewards → safety → CTA)
-- Stay compliant with moderation rules (no banned words/patterns)
-- Apply Dutch TikTok slang and informal tone
-- Can produce unlimited unique combinations
+Generates clean voiceover text for TikTok videos:
+- Text you can directly use as speech / subtitles in your video
+- Organized by sections: Hook → Action → Rewards → Safety → CTA
+- Three styles: full (all sections), short (hook+action+cta), caption (one paragraph)
+- Moderation-safe: no banned words or financial promises
 """
 
 import random
 import re
 from typing import Optional
 
-from . import rules
-from .templates import BANNED_PATTERNS, BANNED_WORDS, TEMPLATES
-from .transformer import TextTransformer
+from .templates import BANNED_PATTERNS, BANNED_WORDS, HASHTAGS, TEMPLATES
 
+# Section order — maps internal names to display labels
+SECTIONS_FULL = ["hook", "action", "rewards", "safety", "cta"]
+SECTIONS_SHORT = ["hook", "action", "cta"]
 
-class ModerationError(Exception):
-    """Raised when generated text contains banned content."""
-    pass
+# Template key mapping: section name → template pool key
+POOL_KEY = {
+    "hook": "hooks",
+    "action": "actions",
+    "rewards": "rewards",
+    "safety": "safety",
+    "cta": "ctas",
+}
 
 
 class UGCGenerator:
-    """Generates TikTok UGC marketing text from templates."""
-
-    def __init__(self):
-        self.transformer = TextTransformer()
+    """Generates clean voiceover text from templates."""
 
     def list_templates(self) -> list:
         """Return available template names and descriptions."""
@@ -43,22 +46,24 @@ class UGCGenerator:
         add_emojis: bool = True,
         seed: Optional[int] = None,
     ) -> list:
-        """Generate UGC marketing texts.
+        """Generate voiceover texts.
 
         Args:
             template_id: "snell" or "tube"
             count: number of unique texts to generate
-            style: "full" (all sections), "short" (hook + action + CTA),
-                   "caption" (compact single paragraph)
-            add_hashtags: whether to append hashtags
-            add_emojis: whether to sprinkle emojis
+            style: "full" (all 5 sections), "short" (hook+action+cta), "caption" (single paragraph)
+            add_hashtags: append relevant hashtags at the end
+            add_emojis: add emojis between sections
             seed: optional random seed for reproducibility
 
         Returns:
-            List of dicts with keys: text, sections, warnings
+            List of dicts with keys: text, sections, style, template, warnings
         """
         if template_id not in TEMPLATES:
             raise ValueError(f"Unknown template: {template_id}. Available: {list(TEMPLATES.keys())}")
+
+        if style not in ("full", "short", "caption"):
+            raise ValueError(f"Unknown style: {style}. Use: full, short, caption")
 
         if seed is not None:
             random.seed(seed)
@@ -68,22 +73,27 @@ class UGCGenerator:
         used_combos = set()
 
         attempts = 0
-        max_attempts = count * 10
+        max_attempts = count * 20
 
         while len(results) < count and attempts < max_attempts:
             attempts += 1
-            text, sections = self._build_text(template, style, add_emojis)
 
-            # Deduplicate by hook+action combo
-            combo_key = (sections["hook"], sections["actions"])
+            # Pick one random text from each section pool
+            sections = self._pick_sections(template)
+
+            # Deduplicate by combo of picked texts
+            combo_key = tuple(sections[s] for s in SECTIONS_FULL)
             if combo_key in used_combos:
                 continue
             used_combos.add(combo_key)
 
+            # Build the voiceover text
+            text = self._format_text(sections, style, add_emojis)
+
             # Add hashtags
             if add_hashtags:
-                hashtags = self._pick_hashtags(template)
-                text = text.rstrip() + "\n\n" + " ".join(hashtags)
+                tags = self._pick_hashtags(template["type"])
+                text = text + "\n\n" + tags
 
             # Moderation check
             warnings = self._check_moderation(text)
@@ -91,84 +101,91 @@ class UGCGenerator:
             results.append({
                 "text": text,
                 "sections": sections,
-                "warnings": warnings,
-                "template": template_id,
                 "style": style,
+                "template": template_id,
+                "warnings": warnings,
             })
 
         return results
 
-    def _build_text(self, template: dict, style: str, add_emojis: bool) -> tuple:
-        """Build a single text from template sections. Returns (text, sections_dict)."""
-        hook = random.choice(template["hooks"])
-        actions = random.choice(template["actions"])
-        rewards = random.choice(template["rewards"])
-        safety = random.choice(template["safety"])
-        cta = random.choice(template["ctas"])
+    def generate_batch(
+        self,
+        template_id: str,
+        count: int = 9,
+        add_hashtags: bool = True,
+        add_emojis: bool = True,
+        seed: Optional[int] = None,
+    ) -> list:
+        """Generate a mixed batch of texts in all three styles.
 
-        sections = {
-            "hook": hook,
-            "actions": actions,
-            "rewards": rewards,
-            "safety": safety,
-            "cta": cta,
+        Distributes count evenly across full, short, caption styles.
+        """
+        per_style = max(1, count // 3)
+        remainder = count - per_style * 3
+
+        results = []
+        for i, style in enumerate(["full", "short", "caption"]):
+            n = per_style + (1 if i < remainder else 0)
+            results.extend(
+                self.generate(
+                    template_id=template_id,
+                    count=n,
+                    style=style,
+                    add_hashtags=add_hashtags,
+                    add_emojis=add_emojis,
+                    seed=seed,
+                )
+            )
+            # Reset seed so next style gets different combos
+            seed = None
+
+        return results
+
+    def _pick_sections(self, template: dict) -> dict:
+        """Pick one random text from each section pool."""
+        return {
+            section: random.choice(template[POOL_KEY[section]])
+            for section in SECTIONS_FULL
         }
 
-        if style == "short":
-            parts = [hook, "", actions, "", cta]
-        elif style == "caption":
-            parts = [f"{hook} {actions} {cta}"]
-        else:  # full
-            parts = [hook, "", actions, "", rewards, "", safety, "", cta]
+    def _format_text(self, sections: dict, style: str, add_emojis: bool) -> str:
+        """Format picked sections into clean voiceover text."""
+        if style == "full":
+            order = SECTIONS_FULL
+        elif style == "short":
+            order = SECTIONS_SHORT
+        else:  # caption
+            order = SECTIONS_FULL
 
-        text = "\n".join(parts)
+        parts = [sections[s] for s in order]
 
-        # Apply slang
-        text = self._apply_slang(text)
+        if style == "caption":
+            # Single paragraph — join with spaces
+            return " ".join(parts)
 
-        # Add emojis between sections
         if add_emojis:
-            text = self._sprinkle_emojis(text)
+            # Add subtle emojis at the start of each section
+            emoji_map = {
+                "hook": "",      # hook is clean — no emoji needed
+                "action": "",
+                "rewards": "",
+                "safety": "",
+                "cta": "",
+            }
+            decorated = []
+            for s in order:
+                prefix = emoji_map.get(s, "")
+                decorated.append(prefix + sections[s])
+            return "\n\n".join(decorated)
 
-        return text, sections
+        # No emojis — just separate sections with blank lines
+        return "\n\n".join(parts)
 
-    def _apply_slang(self, text: str) -> str:
-        """Apply Dutch TikTok slang replacements."""
-        result = text
-        for formal, slang in rules.SLANG_MAP_NL.items():
-            pattern = re.compile(re.escape(formal), re.IGNORECASE)
-            result = pattern.sub(slang, result)
-        return result
-
-    def _sprinkle_emojis(self, text: str) -> str:
-        """Add emojis at section breaks."""
-        emojis_pool = ["🔥", "✨", "👀", "💯", "🎯", "📱", "⚡", "🚀", "💡", "👇"]
-        lines = text.split("\n")
-        result = []
-        emoji_idx = 0
-
-        for i, line in enumerate(lines):
-            if line.strip() and not line.startswith("#"):
-                # Add emoji at end of non-empty lines (not all, ~40% chance)
-                if i > 0 and emoji_idx < len(emojis_pool) and random.random() < 0.4:
-                    line = line.rstrip() + " " + emojis_pool[emoji_idx]
-                    emoji_idx += 1
-            result.append(line)
-
-        return "\n".join(result)
-
-    def _pick_hashtags(self, template: dict) -> list:
-        """Pick relevant hashtags for the template."""
-        base_tags = ["#FYP", "#ForYou", "#Viral"]
-
-        type_tags = {
-            "clicker": ["#TelegramGame", "#ClickerGame", "#MobileGame", "#Gaming", "#TelegramBot"],
-            "video_tasks": ["#Bijbaan", "#MicroTaken", "#Telefoon", "#TelegramBot", "#VideoReview"],
-        }
-
-        pool = type_tags.get(template["type"], [])
-        selected = random.sample(pool, min(2, len(pool)))
-        return base_tags[:2] + selected
+    def _pick_hashtags(self, template_type: str, count: int = 5) -> str:
+        """Pick random hashtags for the template type."""
+        pool = HASHTAGS.get(template_type, HASHTAGS["clicker"])
+        tags = random.sample(pool, min(count, len(pool)))
+        return " ".join(tags)
 
     def _check_moderation(self, text: str) -> list:
         """Check text against moderation rules. Returns list of warnings."""
@@ -184,33 +201,3 @@ class UGCGenerator:
                 warnings.append(f"Banned pattern detected: {pattern}")
 
         return warnings
-
-    def generate_batch(
-        self,
-        template_id: str,
-        count: int = 10,
-        styles: Optional[list] = None,
-    ) -> list:
-        """Generate a mixed batch of texts in different styles.
-
-        Args:
-            template_id: "snell" or "tube"
-            count: total number of texts
-            styles: list of styles to cycle through (default: all three)
-
-        Returns:
-            List of generated text dicts
-        """
-        if styles is None:
-            styles = ["full", "short", "caption"]
-
-        results = []
-        per_style = max(1, count // len(styles))
-        remainder = count - per_style * len(styles)
-
-        for i, style in enumerate(styles):
-            n = per_style + (1 if i < remainder else 0)
-            results.extend(self.generate(template_id, count=n, style=style))
-
-        random.shuffle(results)
-        return results[:count]

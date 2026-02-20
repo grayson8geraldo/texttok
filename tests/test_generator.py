@@ -1,4 +1,4 @@
-"""Tests for UGC generator and moderation compliance."""
+"""Tests for UGC voiceover generator and moderation compliance."""
 
 import unittest
 
@@ -51,6 +51,13 @@ class TestGeneratorBasics(unittest.TestCase):
         for a, b in zip(r1, r2):
             self.assertEqual(a["text"], b["text"])
 
+    def test_sections_dict_has_all_keys(self):
+        results = self.gen.generate("snell", count=1)
+        sections = results[0]["sections"]
+        for key in ["hook", "action", "rewards", "safety", "cta"]:
+            self.assertIn(key, sections)
+            self.assertTrue(len(sections[key]) > 0)
+
 
 class TestGeneratorStyles(unittest.TestCase):
 
@@ -81,6 +88,17 @@ class TestGeneratorStyles(unittest.TestCase):
         text = results[0]["text"]
         # Caption should not have double newlines (it's a single paragraph)
         self.assertNotIn("\n\n", text)
+
+    def test_unknown_style_raises(self):
+        with self.assertRaises(ValueError):
+            self.gen.generate("snell", style="unknown")
+
+    def test_full_style_sections_separated_by_blank_lines(self):
+        results = self.gen.generate("snell", count=1, style="full", add_emojis=False, add_hashtags=False)
+        text = results[0]["text"]
+        # Full style should have sections separated by blank lines
+        parts = text.split("\n\n")
+        self.assertEqual(len(parts), 5)  # hook, action, rewards, safety, cta
 
 
 class TestGeneratorHashtags(unittest.TestCase):
